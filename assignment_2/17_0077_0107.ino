@@ -74,12 +74,12 @@ void loop()
 
   if (debounce(1))
   {
-    if (buttonState[1] == LOW && !ledState[0] && !ledState[2])
+    if (buttonState[1] == LOW && !ledState[0] && !ledState[2] && !isActive)
     {
       blinkYellowTime = millis();
       lastTime[1] = millis();
       ledState[1] = !ledState[1];
-      digitalWrite(led[1], ledState[1]);
+      digitalWrite(led[1],ledState[1]);
       isActive = 1;
     }
   }
@@ -89,6 +89,7 @@ void loop()
     blinkYellowTime = millis();
     ledState[1] = !ledState[1];
     digitalWrite(led[1], ledState[1]);
+    isActive = 0;
   }
 
   if ((millis() - lastTime[0]) > ledTime[0] && lastTime[0] != 0)
