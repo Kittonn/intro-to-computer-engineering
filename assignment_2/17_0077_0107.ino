@@ -17,7 +17,7 @@ int reading[3];
 int ledTime[3] = {3000, 2000, 3000};
 unsigned long long int lastTime[3] = {0, 0, 0};
 unsigned long long int blinkYellow = 500;
-unsigned long long int lastYellowTime = 0;
+unsigned long long int blinkYellowTime = 0;
 int isActive = 0;
 void setup()
 {
@@ -74,18 +74,21 @@ void loop()
 
   if (debounce(1))
   {
-    if (buttonState[1] == LOW  && !ledState[0] && !ledState[2])
-    { 
-      lastYellowTime = millis();
+    if (buttonState[1] == LOW && !ledState[0] && !ledState[2])
+    {
+      blinkYellowTime = millis();
       lastTime[1] = millis();
+      ledState[1] = !ledState[1];
+      digitalWrite(led[1], ledState[1]);
       isActive = 1;
     }
   }
 
-  if ((millis() - lastYellowTime) >= blinkYellow && isActive && (millis() - lastTime[1]) < ledTime[1]) {
-    lastYellowTime = millis();  
+  if ((millis() - blinkYellowTime) >= blinkYellow && isActive && (millis() - lastTime[1]) < ledTime[1])
+  {
+    blinkYellowTime = millis();
     ledState[1] = !ledState[1];
-    digitalWrite(led[1],ledState[1]);
+    digitalWrite(led[1], ledState[1]);
   }
 
   if ((millis() - lastTime[0]) > ledTime[0] && lastTime[0] != 0)
