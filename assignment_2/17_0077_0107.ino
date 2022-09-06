@@ -27,7 +27,7 @@ void setup()
   pinMode(BTN_1, INPUT);        // PULL DOWN
   pinMode(BTN_2, INPUT);        // PULL UP
   pinMode(BTN_3, INPUT_PULLUP); // PULLUP BUILTIN
-  Serial.begin(9600);
+  // Serial.begin(9600);
 }
 
 int debounce(int i)
@@ -64,7 +64,7 @@ void loop()
 
   if (debounce(2))
   {
-    if (buttonState[2] == LOW && !ledState[0])
+    if (buttonState[2] == LOW && !ledState[0] || (ledState[0] && ledState[2]))
     {
       ledState[2] = !ledState[2];
       digitalWrite(led[2], ledState[2]);
@@ -88,10 +88,13 @@ void loop()
   {
     blinkYellowTime = millis();
     ledState[1] = !ledState[1];
-    digitalWrite(led[1], ledState[1]);
-    isActive = 0;
+    digitalWrite(led[1], ledState[1]); 
   }
 
+  if((millis() - lastTime[1]) > ledTime[1]) {
+    isActive = 0;
+  }
+  
   if ((millis() - lastTime[0]) > ledTime[0] && lastTime[0] != 0)
   {
     ledState[0] = LOW;
