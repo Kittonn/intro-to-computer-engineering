@@ -84,7 +84,7 @@ void display_check(int num)
   }
 }
 
-void handle_guess_button()
+void handle_start_button()
 {
   if (debounce(0))
   {
@@ -102,7 +102,7 @@ void handle_guess_button()
   }
 }
 
-void handle_start_button()
+void handle_guess_button()
 {
   if (debounce(1))
   {
