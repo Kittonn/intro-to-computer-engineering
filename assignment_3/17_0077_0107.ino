@@ -1,17 +1,17 @@
-int new_num_array[10][7] = {{1, 0, 0, 1, 1, 1, 1}, // 0
-                            {0, 0, 1, 0, 0, 1, 0}, // 21
-                            {0, 0, 0, 0, 1, 1, 0}, // 3
-                            {1, 0, 0, 1, 1, 0, 0}, // 4
-                            {0, 1, 0, 0, 1, 0, 0}, // 5
-                            {0, 1, 0, 0, 0, 0, 0}, // 6
-                            {0, 0, 0, 1, 1, 1, 1}, // 7
-                            {0, 0, 0, 0, 0, 0, 0}, // 8
-                            {0, 0, 0, 0, 1, 0, 0},
-                            {1, 1, 1, 1, 1, 1, 1}}; // 9
+int num_array[10][7] = {{1, 0, 0, 1, 1, 1, 1}, // 0
+                        {0, 0, 1, 0, 0, 1, 0}, // 21
+                        {0, 0, 0, 0, 1, 1, 0}, // 3
+                        {1, 0, 0, 1, 1, 0, 0}, // 4
+                        {0, 1, 0, 0, 1, 0, 0}, // 5
+                        {0, 1, 0, 0, 0, 0, 0}, // 6
+                        {0, 0, 0, 1, 1, 1, 1}, // 7
+                        {0, 0, 0, 0, 0, 0, 0}, // 8
+                        {0, 0, 0, 0, 1, 0, 0},
+                        {1, 1, 1, 1, 1, 1, 1}}; // 9
 
-int new_check_array[3][7] = {{0, 0, 0, 0, 0, 0, 1},  // 1
-                             {0, 1, 0, 0, 0, 0, 1},  // G
-                             {1, 1, 1, 0, 0, 0, 1}}; // L
+int check_array[3][7] = {{0, 0, 0, 0, 0, 0, 1},  // 1
+                         {0, 1, 0, 0, 0, 0, 1},  // G
+                         {1, 1, 1, 0, 0, 0, 1}}; // L
 
 int currentNumber = 0;
 int button[2] = {13, 12};
@@ -30,6 +30,7 @@ void setup()
   {
     pinMode(button[i], INPUT_PULLUP);
   }
+
   for (int i = 2; i < 9; i++)
   {
     pinMode(i, OUTPUT);
@@ -37,10 +38,10 @@ void setup()
 
   randomSeed(analogRead(A0));
   randomNumber = random(1, 10);
+
   Serial.begin(9600);
   Serial.println(randomNumber);
-  number(currentNumber);
-  Serial.println(currentNumber);
+  display_number(currentNumber);
 }
 
 int debounce(int i)
@@ -63,29 +64,28 @@ int debounce(int i)
   return isChange;
 }
 
-void number(int num)
+void display_number(int num)
 {
   int pin = 2;
   for (int i = 0; i < 7; i++)
   {
-    digitalWrite(pin, (new_num_array[num][i]));
+    digitalWrite(pin, num_array[num][i]);
     pin++;
   }
 }
 
-void check(int num)
+void display_check(int num)
 {
   int pin = 2;
   for (int i = 0; i < 7; i++)
   {
-    digitalWrite(pin, (new_check_array[num][i]));
+    digitalWrite(pin, check_array[num][i]);
     pin++;
   }
 }
 
-void loop()
+void handle_guess_button()
 {
-
   if (debounce(0))
   {
 
@@ -97,11 +97,13 @@ void loop()
         currentNumber = 0;
       }
       delay(500);
-      Serial.println(currentNumber);
-      number(currentNumber);
+      display_number(currentNumber);
     }
   }
+}
 
+void handle_start_button()
+{
   if (debounce(1))
   {
     if (!buttonState[1])
@@ -109,23 +111,26 @@ void loop()
       if (currentNumber + 1 == randomNumber)
       {
         delay(500);
-        check(0);
-        Serial.println("Equal");
+        display_check(0);
         randomNumber = random(1, 10);
         Serial.println(randomNumber);
       }
       else if (currentNumber + 1 < randomNumber)
       {
         delay(500);
-        check(2);
-        Serial.println("Less than");
+        display_check(2);
       }
       else if (currentNumber + 1 > randomNumber)
       {
         delay(500);
-        check(1);
-        Serial.println("More than");
+        display_check(1);
       }
     }
   }
+}
+
+void loop()
+{
+  handle_start_button();
+  handle_guess_button();
 }
