@@ -26,10 +26,12 @@
 #define b3_OFF 11
 #define b3_ON 12
 
-struct State {
-  unsigned long ST_Out; 
-  unsigned long Time;  
-  unsigned long Next[8];}; // Input --> [000,111]
+struct State
+{
+  unsigned long ST_Out;
+  unsigned long Time;
+  unsigned long Next[8];
+}; // Input --> [000,111]
 
 // 000 -> 0
 // 001 -> 1
@@ -42,24 +44,25 @@ struct State {
 
 typedef const struct State SType;
 
-SType FSM[13]={
-  {B10010100,400,{goWest,goWest,goWest,goWest,goWest,goWest,goWest,goWest}}, // waitWest
-  {B10100001,2000,{goWest,goWest,waitSouth,waitSouth,wait_WALK_WEST,wait_WALK_WEST,waitSouth,waitSouth}}, // goWest
-  {B10100010,400,{goSouth,goSouth,goSouth,goSouth,goSouth,goSouth,goSouth,goSouth}}, //waitSouth
-  {B10001100,2000,{goSouth,waitWest,goSouth,waitWest,wait_WALK_SOUTH,wait_WALK_SOUTH,wait_WALK_SOUTH,wait_WALK_SOUTH}}, //goSouth
-  {B10010100,400,{goWalk,goWalk,goWalk,goWalk,goWalk,goWalk,goWalk,goWalk}}, // wait_WALK_SOUTH
-  {B10100010,400,{goWalk,goWalk,goWalk,goWalk,goWalk,goWalk,goWalk,goWalk}}, // wait_WALK_WEST
-  {B01100100,2000,{goWalk,b1_OFF,b1_OFF,b1_OFF,goWalk,b1_OFF,b1_OFF,b1_OFF}}, //goWalk
-  {B00100100,300,{b1_ON,b1_ON,b1_ON,b1_ON,b1_ON,b1_ON,b1_ON,b1_ON}}, //b1_OFF
-  {B01100100,300,{b2_OFF,b2_OFF,b2_OFF,b2_OFF,b2_OFF,b2_OFF,b2_OFF,b2_OFF}}, //b1_ON
-  {B00100100,300,{b2_ON,b2_ON,b2_ON,b2_ON,b2_ON,b2_ON,b2_ON,b2_ON}}, //b2_OFF
-  {B01100100,300,{b3_OFF,b3_OFF,b3_OFF,b3_OFF,b3_OFF,b3_OFF,b3_OFF,b3_OFF}}, //b2_ON
-  {B00100100,300,{b3_ON,b3_ON,b3_ON,b3_ON,b3_ON,b3_ON,b3_ON,b3_ON}}, //b3_OFF
-  {B01100100,300,{goWalk,goWest,goSouth,goWest,goWalk,goWest,goSouth,goWest}}, //b3_ON
+SType FSM[13] = {
+    {B10010100, 400, {goWest, goWest, goWest, goWest, goWest, goWest, goWest, goWest}},                                            // waitWest
+    {B10100001, 2000, {goWest, goWest, waitSouth, waitSouth, wait_WALK_WEST, wait_WALK_WEST, waitSouth, waitSouth}},               // goWest
+    {B10100010, 400, {goSouth, goSouth, goSouth, goSouth, goSouth, goSouth, goSouth, goSouth}},                                    // waitSouth
+    {B10001100, 2000, {goSouth, waitWest, goSouth, waitWest, wait_WALK_SOUTH, wait_WALK_SOUTH, wait_WALK_SOUTH, wait_WALK_SOUTH}}, // goSouth
+    {B10010100, 400, {goWalk, goWalk, goWalk, goWalk, goWalk, goWalk, goWalk, goWalk}},                                            // wait_WALK_SOUTH
+    {B10100010, 400, {goWalk, goWalk, goWalk, goWalk, goWalk, goWalk, goWalk, goWalk}},                                            // wait_WALK_WEST
+    {B01100100, 2000, {goWalk, b1_OFF, b1_OFF, b1_OFF, goWalk, b1_OFF, b1_OFF, b1_OFF}},                                           // goWalk
+    {B00100100, 300, {b1_ON, b1_ON, b1_ON, b1_ON, b1_ON, b1_ON, b1_ON, b1_ON}},                                                    // b1_OFF
+    {B01100100, 300, {b2_OFF, b2_OFF, b2_OFF, b2_OFF, b2_OFF, b2_OFF, b2_OFF, b2_OFF}},                                            // b1_ON
+    {B00100100, 300, {b2_ON, b2_ON, b2_ON, b2_ON, b2_ON, b2_ON, b2_ON, b2_ON}},                                                    // b2_OFF
+    {B01100100, 300, {b3_OFF, b3_OFF, b3_OFF, b3_OFF, b3_OFF, b3_OFF, b3_OFF, b3_OFF}},                                            // b2_ON
+    {B00100100, 300, {b3_ON, b3_ON, b3_ON, b3_ON, b3_ON, b3_ON, b3_ON, b3_ON}},                                                    // b3_OFF
+    {B01100100, 300, {goWalk, goWest, goSouth, goWest, goWalk, goWest, goSouth, goWest}},                                          // b3_ON
 };
-unsigned long S=0;
+unsigned long S = 0;
 
-void setup() {
+void setup()
+{
   pinMode(LED_W_G, OUTPUT);
   pinMode(LED_W_Y, OUTPUT);
   pinMode(LED_W_R, OUTPUT);
@@ -74,24 +77,25 @@ void setup() {
   pinMode(LED_WALK_R, OUTPUT);
   pinMode(WALK_BUTTON_PIN, INPUT);
 }
-int West,South,Walk,input;
-void loop() {
-  digitalWrite(LED_W_G, FSM[S].ST_Out& B00000001);
-  digitalWrite(LED_W_Y, FSM[S].ST_Out& B00000010);
-  digitalWrite(LED_W_R, FSM[S].ST_Out& B00000100);
+int West, South, Walk, input;
+void loop()
+{
+  digitalWrite(LED_W_G, FSM[S].ST_Out & B00000001);
+  digitalWrite(LED_W_Y, FSM[S].ST_Out & B00000010);
+  digitalWrite(LED_W_R, FSM[S].ST_Out & B00000100);
 
-  digitalWrite(LED_S_G, FSM[S].ST_Out& B00001000);
-  digitalWrite(LED_S_Y, FSM[S].ST_Out& B00010000);
-  digitalWrite(LED_S_R, FSM[S].ST_Out& B00100000);
+  digitalWrite(LED_S_G, FSM[S].ST_Out & B00001000);
+  digitalWrite(LED_S_Y, FSM[S].ST_Out & B00010000);
+  digitalWrite(LED_S_R, FSM[S].ST_Out & B00100000);
 
-  digitalWrite(LED_WALK_G, FSM[S].ST_Out& B01000000);
-  digitalWrite(LED_WALK_R, FSM[S].ST_Out& B10000000);
+  digitalWrite(LED_WALK_G, FSM[S].ST_Out & B01000000);
+  digitalWrite(LED_WALK_R, FSM[S].ST_Out & B10000000);
 
   delay(FSM[S].Time);
   West = digitalRead(WEST_BUTTON_PIN);
   South = digitalRead(SOUTH_BUTTON_PIN);
   Walk = digitalRead(WALK_BUTTON_PIN);
 
-  input = Walk*4+South*2+West;
-  S = FSM[S].Next[input]; 
+  input = Walk * 4 + South * 2 + West;
+  S = FSM[S].Next[input];
 }

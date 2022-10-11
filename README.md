@@ -8,9 +8,10 @@
 
 ### Assignment
 
-| \#  | Assignment      | Completed |
-| :-: | --------------- | :-------: |
-|  1  | Charliplexing   |    ✔️     |
-|  2  | Priority Switch |    ✔️     |
-|  3  | Number Guess    |    ✔️     |
-|  4  | Project         |    ✔️     |
+| \#  | Assignment           | Completed |
+| :-: | -------------------- | :-------: |
+|  1  | Charliplexing        |    ✔️     |
+|  2  | Priority Switch      |    ✔️     |
+|  3  | Number Guess         |    ✔️     |
+|  4  | Project              |    ✔️     |
+|  5  | Finite State Machine |    ✔️     |
