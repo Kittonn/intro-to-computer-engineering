@@ -15,3 +15,4 @@
 |  3  | Number Guess         |    ✔️     |
 |  4  | Project              |    ✔️     |
 |  5  | Finite State Machine |    ✔️     |
+|  6  | Network Chat         |    ✔️     |
