@@ -12,8 +12,6 @@ struct Time {
   int sec;
 };
 
-
-
 // ==== OLED SETTING ====
 #define OLED_RESET -1
 #define SCREEN_WIDTH 128
@@ -167,17 +165,14 @@ void change_mode() {
   MODE %= 3;
 }
 
-String timerText = "00 : 00 : 00";
-String countUpText = "00 : 00 : 00";
+char timerText[12];
+char countUpText[12];
 void timer_text() {
-  timerText[0] = (clock.hour / 10) + '0';
-  timerText[1] = (clock.hour % 10) + '0';
+  // int a = sprintf(timerText, "%02d : %02d : %02d", clock.hour, clock.min, clock.sec);
+}
 
-  timerText[5] = (clock.min / 10) + '0';
-  timerText[6] = (clock.min % 10) + '0';
-
-  timerText[10] = (clock.sec / 10) + '0';
-  timerText[11] = (clock.sec % 10) + '0';
+void countup_text() {
+  // int b = sprintf(countUpText, "%02d : %02d : %02d", countUp.hour, countUp.min, countUp.sec);
 }
 
 void setup() {
@@ -242,14 +237,21 @@ void loop() {
   // Serial.print(get_y());
   // Serial.print(" ");
   // Serial.println(get_z());
+
   timer_text();
-  Serial.println(timerText);
+  countup_text();
+
   OLED.clearDisplay();
   OLED.setTextColor(WHITE);
   OLED.setCursor(10, 0);
   OLED.setTextSize(1);
-  OLED.println(timerText);
-  // OLED.setCursor(10, 15);
-  // OLED.println("World!");
+  // OLED.println(timerText);
+  if (MODE == 0) {
+    OLED.println(timerText);
+  } else if (MODE == 1) {
+    OLED.println(countUpText);
+  } else if (MODE == 2) {
+    OLED.println(clock.sec);
+  }
   OLED.display();
 }
