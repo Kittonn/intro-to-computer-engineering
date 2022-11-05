@@ -4,8 +4,6 @@
 #include <EEPROM.h>
 #include <TimerOne.h>
 
-#define DEBUG 1
-
 struct Time {
   int hour;
   int min;
@@ -35,12 +33,16 @@ int buffer_pos[NUM_AXES] = { 0 };
 #define BTN_1 7
 #define BTN_2 6
 #define BTN_3 5
-int button[3] = { BTN_1, BTN_2, BTN_3 };
-int reading[3];
-int buttonState[3];
-int lastButtonState[3] = { HIGH, HIGH, HIGH };
+#define BTN_4 4
+int button[4] = { BTN_1, BTN_2, BTN_3, BTN_4 };
+int reading[4];
+int buttonState[4];
+int lastButtonState[4] = { HIGH, HIGH, HIGH, HIGH };
 unsigned long long int debounceDelay = 50;
-unsigned long long int lastDebounceTime[3];
+unsigned long long int lastDebounceTime[4];
+
+// ==== BUZZER SETTING ====
+#define BUZZER_PIN 8
 
 // ==== CLOCK SETTING ====
 Time clock = { 0, 0, 0 };
@@ -53,10 +55,16 @@ int onCountUpPause = 1;
 Time countDown = { 0, 0, 0 };
 int onCountDownStart = 0, onCountDownPause = 0;
 
+// ==== ALARM CLOCK SETTING ====
+Time alarm = { 0, 0, 0 };
+Time alarmSave = { 0, 0, 0 };
+int onAlarm = 0;
+
 // ==== MODE SETTING ====
 #define CLOCK_MODE 0
 #define COUNTER_UP_MODE 1
 #define COUNTER_DOWN_MODE 2
+#define ALARM_MODE 3
 int MODE = CLOCK_MODE;
 
 // ==== ACCELEROMETER ====
@@ -101,6 +109,7 @@ int debounce(int i) {
 void interruptClock() {
   timer();
   countUpTime();
+  change_timestart_alarm();
 }
 
 // ==== TIMER CLOCK ====
@@ -141,39 +150,101 @@ void resetCountUpTime() {
   countUp.sec = 0;
 }
 
-
-// ==== PRINT DEBUG ====
-void print_timer() {
-  Serial.print(clock.hour);
-  Serial.print(" : ");
-  Serial.print(clock.min);
-  Serial.print(" : ");
-  Serial.println(clock.sec);
+// ==== COUNT DOWN CLOCK ====
+void change_hour_countdown() {
+  countDown.hour += 1;
+  countDown.hour %= 24;
 }
 
-void print_countUp() {
-  Serial.print(countUp.hour);
-  Serial.print(" : ");
-  Serial.print(countUp.min);
-  Serial.print(" : ");
-  Serial.println(countUp.sec);
+void change_min_countdown() {
+  countDown.min += 1;
+  countDown.min %= 60;
 }
+
+void change_sec_countdown() {
+  countDown.sec += 1;
+  countDown.sec %= 60;
+}
+
+// ==== ALARM CLOCK ====
+void change_hour_alarm() {
+  alarm.hour += 1;
+  alarm.hour %= 24;
+}
+
+void change_min_alarm() {
+  alarm.min += 1;
+  alarm.min %= 60;
+}
+
+void change_timestart_alarm() {
+  if (clock.sec == 0) {
+    alarm.min = clock.min;
+  }
+  if (clock.min == 0) {
+    alarm.hour = clock.hour;
+  }
+}
+
 
 // ==== CLOCK MODE ====
 void change_mode() {
   MODE += 1;
-  MODE %= 3;
+  MODE %= 4;
+  if (MODE == ALARM_MODE) {
+    alarm.hour = clock.hour;
+    alarm.min = clock.min;
+  }
 }
 
-char timerText[12];
-char countUpText[12];
-void timer_text() {
-  // int a = sprintf(timerText, "%02d : %02d : %02d", clock.hour, clock.min, clock.sec);
+// ==== Time Text ====
+String timerText = "00 : 00 : 00";
+String countUpText = "00 : 00 : 00";
+String countDownText = "00 : 00 : 00";
+String alarmText = "00 : 00";
+void time_text() {
+  timerText[0] = (clock.hour / 10) + '0';
+  timerText[1] = (clock.hour % 10) + '0';
+
+  timerText[5] = (clock.min / 10) + '0';
+  timerText[6] = (clock.min % 10) + '0';
+
+  timerText[10] = (clock.sec / 10) + '0';
+  timerText[11] = (clock.sec % 10) + '0';
+
+  countUpText[0] = (countUp.hour / 10) + '0';
+  countUpText[1] = (countUp.hour % 10) + '0';
+
+  countUpText[5] = (countUp.min / 10) + '0';
+  countUpText[6] = (countUp.min % 10) + '0';
+
+  countUpText[10] = (countUp.sec / 10) + '0';
+  countUpText[11] = (countUp.sec % 10) + '0';
+
+  countDownText[0] = (countDown.hour / 10) + '0';
+  countDownText[1] = (countDown.hour % 10) + '0';
+
+  countDownText[5] = (countDown.min / 10) + '0';
+  countDownText[6] = (countDown.min % 10) + '0';
+
+  countDownText[10] = (countDown.sec / 10) + '0';
+  countDownText[11] = (countDown.sec % 10) + '0';
+
+  alarmText[0] = (alarm.hour / 10) + '0';
+  alarmText[1] = (alarm.hour % 10) + '0';
+
+  alarmText[5] = (alarm.min / 10) + '0';
+  alarmText[6] = (alarm.min % 10) + '0';
 }
 
-void countup_text() {
-  // int b = sprintf(countUpText, "%02d : %02d : %02d", countUp.hour, countUp.min, countUp.sec);
+void display_text(int x1, int y1, String name, int x2, int y2, String timer) {
+  OLED.setCursor(x1, y1);
+  OLED.println(name);
+  OLED.setCursor(x2, y2);
+  OLED.println(timer);
 }
+
+
 
 void setup() {
   Serial.begin(9600);
@@ -182,7 +253,7 @@ void setup() {
   } else {
     Serial.println("All OLED Start Work !!!");
   }
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 4; i++) {
     pinMode(button[i], INPUT_PULLUP);
   }
   Timer1.initialize(1000000);
@@ -191,24 +262,41 @@ void setup() {
 
 void loop() {
 
-
   if (debounce(0)) {
     if (!digitalRead(button[0])) {
-      if (MODE == 0) {
-        change_hour();
-      } else if (MODE == 1) {
-        onCountUpPause = onCountUpPause == 1 ? 0 : 1;
+      switch (MODE) {
+        case CLOCK_MODE:
+          change_hour();
+          break;
+        case COUNTER_UP_MODE:
+          onCountUpPause = onCountUpPause == 1 ? 0 : 1;
+          break;
+        case COUNTER_DOWN_MODE:
+          change_hour_countdown();
+          break;
+        case ALARM_MODE:
+          change_hour_alarm();
+          break;
       }
     }
   }
 
   if (debounce(1)) {
     if (!digitalRead(button[1])) {
-      if (MODE == 0) {
-        change_min();
-      } else if (MODE == 1) {
-        onCountUpPause = 1;
-        resetCountUpTime();
+      switch (MODE) {
+        case CLOCK_MODE:
+          change_min();
+          break;
+        case COUNTER_UP_MODE:
+          onCountUpPause = 1;
+          resetCountUpTime();
+          break;
+        case COUNTER_DOWN_MODE:
+          change_min_countdown();
+          break;
+        case ALARM_MODE:
+          change_min_alarm();
+          break;
       }
     }
   }
@@ -216,20 +304,30 @@ void loop() {
   if (debounce(2)) {
     if (!digitalRead(button[2])) {
       change_mode();
-      // Serial.println(MODE);
     }
   }
 
-
-  if (DEBUG) {
-    if (MODE == 0) {
-      // print_timer();
-    } else if (MODE == 1) {
-      // print_countUp();
+  if (debounce(3)) {
+    if (!digitalRead(button[3])) {
+      switch (MODE) {
+        case COUNTER_DOWN_MODE:
+          change_sec_countdown();
+          break;
+        case ALARM_MODE:
+          onAlarm = onAlarm == 0 ? 1 : 0;
+          if (onAlarm) {
+            alarmSave.hour = alarm.hour;
+            alarmSave.min = alarm.min;
+          }
+          break;
+      }
     }
-    // Serial.println(MODE);
   }
 
+  if (onAlarm && alarmSave.hour == clock.hour && alarmSave.min == clock.min && clock.sec == 0) {
+    tone(BUZZER_PIN, 440, 100);
+    onAlarm = 0;
+  }
 
 
   // Serial.print(get_x());
@@ -238,20 +336,25 @@ void loop() {
   // Serial.print(" ");
   // Serial.println(get_z());
 
-  timer_text();
-  countup_text();
+  time_text();
 
   OLED.clearDisplay();
   OLED.setTextColor(WHITE);
-  OLED.setCursor(10, 0);
-  OLED.setTextSize(1);
-  // OLED.println(timerText);
-  if (MODE == 0) {
-    OLED.println(timerText);
-  } else if (MODE == 1) {
-    OLED.println(countUpText);
-  } else if (MODE == 2) {
-    OLED.println(clock.sec);
+
+  switch (MODE) {
+    case CLOCK_MODE:
+      display_text(10, 0, "Clock", 10, 12, timerText);
+      break;
+    case COUNTER_UP_MODE:
+      display_text(10, 0, "Stopwatch", 10, 12, countUpText);
+      break;
+    case COUNTER_DOWN_MODE:
+      display_text(10, 0, "Timer", 10, 12, countDownText);
+      break;
+    case ALARM_MODE:
+      display_text(10, 0, "Alarm", 10, 12, alarmText);
+      break;
   }
+  OLED.setTextSize(1);
   OLED.display();
 }
