@@ -52,8 +52,8 @@ Time countUp = { 0, 0, 0 };
 int onCountUpPause = 1;
 
 // ==== COUNT DOWN CLOCK SETTING ====
-Time countDown = { 0, 0, 0 };
-int onCountDownStart = 0, onCountDownPause = 0;
+// Time countDown = { 0, 0, 0 };
+// int onCountDownStart = 0, onCountDownPause = 0;
 
 // ==== ALARM CLOCK SETTING ====
 Time alarm = { 0, 0, 0 };
@@ -63,8 +63,8 @@ int onAlarm = 0;
 // ==== MODE SETTING ====
 #define CLOCK_MODE 0
 #define COUNTER_UP_MODE 1
-#define COUNTER_DOWN_MODE 2
-#define ALARM_MODE 3
+#define ALARM_MODE 2
+// #define COUNTER_DOWN_MODE 3
 int MODE = CLOCK_MODE;
 
 // ==== ACCELEROMETER ====
@@ -151,20 +151,20 @@ void resetCountUpTime() {
 }
 
 // ==== COUNT DOWN CLOCK ====
-void change_hour_countdown() {
-  countDown.hour += 1;
-  countDown.hour %= 24;
-}
+// void change_hour_countdown() {
+//   countDown.hour += 1;
+//   countDown.hour %= 24;
+// }
 
-void change_min_countdown() {
-  countDown.min += 1;
-  countDown.min %= 60;
-}
+// void change_min_countdown() {
+//   countDown.min += 1;
+//   countDown.min %= 60;
+// }
 
-void change_sec_countdown() {
-  countDown.sec += 1;
-  countDown.sec %= 60;
-}
+// void change_sec_countdown() {
+//   countDown.sec += 1;
+//   countDown.sec %= 60;
+// }
 
 // ==== ALARM CLOCK ====
 void change_hour_alarm() {
@@ -190,7 +190,7 @@ void change_timestart_alarm() {
 // ==== CLOCK MODE ====
 void change_mode() {
   MODE += 1;
-  MODE %= 4;
+  MODE %= 3;
   if (MODE == ALARM_MODE) {
     alarm.hour = clock.hour;
     alarm.min = clock.min;
@@ -200,8 +200,9 @@ void change_mode() {
 // ==== Time Text ====
 String timerText = "00 : 00 : 00";
 String countUpText = "00 : 00 : 00";
-String countDownText = "00 : 00 : 00";
+// String countDownText = "00 : 00 : 00";
 String alarmText = "00 : 00";
+String saveAlarmText = "00 : 00";
 void time_text() {
   timerText[0] = (clock.hour / 10) + '0';
   timerText[1] = (clock.hour % 10) + '0';
@@ -221,20 +222,26 @@ void time_text() {
   countUpText[10] = (countUp.sec / 10) + '0';
   countUpText[11] = (countUp.sec % 10) + '0';
 
-  countDownText[0] = (countDown.hour / 10) + '0';
-  countDownText[1] = (countDown.hour % 10) + '0';
+  // countDownText[0] = (countDown.hour / 10) + '0';
+  // countDownText[1] = (countDown.hour % 10) + '0';
 
-  countDownText[5] = (countDown.min / 10) + '0';
-  countDownText[6] = (countDown.min % 10) + '0';
+  // countDownText[5] = (countDown.min / 10) + '0';
+  // countDownText[6] = (countDown.min % 10) + '0';
 
-  countDownText[10] = (countDown.sec / 10) + '0';
-  countDownText[11] = (countDown.sec % 10) + '0';
+  // countDownText[10] = (countDown.sec / 10) + '0';
+  // countDownText[11] = (countDown.sec % 10) + '0';
 
   alarmText[0] = (alarm.hour / 10) + '0';
   alarmText[1] = (alarm.hour % 10) + '0';
 
   alarmText[5] = (alarm.min / 10) + '0';
   alarmText[6] = (alarm.min % 10) + '0';
+
+  saveAlarmText[0] = (alarmSave.hour / 10) + '0';
+  saveAlarmText[1] = (alarmSave.hour % 10) + '0';
+
+  saveAlarmText[5] = (alarmSave.min / 10) + '0';
+  saveAlarmText[6] = (alarmSave.min % 10) + '0';
 }
 
 void display_text(int x1, int y1, String name, int x2, int y2, String timer) {
@@ -271,9 +278,9 @@ void loop() {
         case COUNTER_UP_MODE:
           onCountUpPause = onCountUpPause == 1 ? 0 : 1;
           break;
-        case COUNTER_DOWN_MODE:
-          change_hour_countdown();
-          break;
+        // case COUNTER_DOWN_MODE:
+        //   change_hour_countdown();
+        //   break;
         case ALARM_MODE:
           change_hour_alarm();
           break;
@@ -291,9 +298,9 @@ void loop() {
           onCountUpPause = 1;
           resetCountUpTime();
           break;
-        case COUNTER_DOWN_MODE:
-          change_min_countdown();
-          break;
+        // case COUNTER_DOWN_MODE:
+        //   change_min_countdown();
+        //   break;
         case ALARM_MODE:
           change_min_alarm();
           break;
@@ -310,9 +317,9 @@ void loop() {
   if (debounce(3)) {
     if (!digitalRead(button[3])) {
       switch (MODE) {
-        case COUNTER_DOWN_MODE:
-          change_sec_countdown();
-          break;
+        // case COUNTER_DOWN_MODE:
+        //   change_sec_countdown();
+        //   break;
         case ALARM_MODE:
           onAlarm = onAlarm == 0 ? 1 : 0;
           if (onAlarm) {
@@ -348,11 +355,12 @@ void loop() {
     case COUNTER_UP_MODE:
       display_text(10, 0, "Stopwatch", 10, 12, countUpText);
       break;
-    case COUNTER_DOWN_MODE:
-      display_text(10, 0, "Timer", 10, 12, countDownText);
-      break;
+    // case COUNTER_DOWN_MODE:
+    //   display_text(10, 0, "Timer", 10, 12, countDownText);
+    //   break;
     case ALARM_MODE:
       display_text(10, 0, "Alarm", 10, 12, alarmText);
+      display_text(10, 24, saveAlarmText, 70, 24, onAlarm == 0 ? "OFF" : "ON");
       break;
   }
   OLED.setTextSize(1);
