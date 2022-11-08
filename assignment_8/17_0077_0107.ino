@@ -9,7 +9,7 @@
 // Define Button
 #define BUTTON_RED 7
 #define BUTTON_YELLOW 8
-#define BUTTON GREEN 9
+#define BUTTON_GREEN 9
 
 // Defin Delay
 #define Delay(x) vTaskDelay(pdMS_TO_TICKS(x))
@@ -20,7 +20,6 @@ QueueHandle_t GREEN_QUEUE;
 
 void setup()
 {
-
     RED_QUEUE = xQueueCreate(10, sizeof(bool));
     YELLOW_QUEUE = xQueueCreate(10, sizeof(bool));
     GREEN_QUEUE = xQueueCreate(10, sizeof(bool));
@@ -29,6 +28,8 @@ void setup()
     xTaskCreate(redTaskSender, "RED TASK SENDER", 128, (void *)BUTTON_RED, 1, NULL);
     xTaskCreate(yellowTaskReceiver, "YELLOW TASK RECIEVER", 128, (void *)LED_YELLOW, 1, NULL);
     xTaskCreate(yellowTaskSender, "YELLOW TASK SENDER", 128, (void *)BUTTON_YELLOW, 1, NULL);
+    xTaskCreate(greenTaskReceiver, "GREEN TASK RECEIVER", 128, (void *)LED_GREEN, 1, NULL);
+    xTaskCreate(greenTaskSender, "GREEN TASK SENDER", 128, (void *)BUTTON_GREEN, 1, NULL);
 }
 
 void redTaskSender(void *pvParameters)
@@ -117,7 +118,7 @@ void yellowTaskReceiver(void *pvParameters)
     unsigned short led = (unsigned short)pvParameters;
     pinMode(led, OUTPUT);
 
-    bool is_yellow_blink = false;
+    bool is_yellow_blink = true;
     bool yellow_blink = true;
 
     while (true)
@@ -134,20 +135,77 @@ void yellowTaskReceiver(void *pvParameters)
         // YELLOW LED CONDITION
         if (is_yellow_blink && led == LED_YELLOW)
         {
-            digitalWrite(LED_YELLOW, yellow_blink);
+            digitalWrite(LED_YELLOW, !yellow_blink);
             yellow_blink = !yellow_blink;
         }
         else if (!is_yellow_blink && led == LED_YELLOW)
         {
             digitalWrite(LED_YELLOW, LOW);
         }
-        Delay(1000);
+        Delay(500);
+    }
+}
+
+void greenTaskSender(void *pvParameters)
+{
+    unsigned short button = (unsigned short)pvParameters;
+    int is_button_pressed = false;
+
+    pinMode(button, INPUT_PULLUP);
+
+    while (true)
+    {
+        if (isButtonPressed(button) && !is_button_pressed)
+        {
+            is_button_pressed = true;
+            xQueueSend(GREEN_QUEUE, &button, 0);
+        }
+
+        if (!isButtonPressed(button))
+        {
+            is_button_pressed = false;
+        }
+        Delay(50);
+    }
+}
+
+void greenTaskReceiver(void *pvParameters)
+{
+    unsigned short led = (unsigned short)pvParameters;
+
+    pinMode(led, OUTPUT);
+
+    unsigned short green_count = 0;
+
+    while (true)
+    {
+
+        bool is_received = false;
+        if (led == LED_GREEN)
+            is_received = xQueueReceive(GREEN_QUEUE, NULL, 0);
+
+        // RECEIVE
+        if (is_received && led == LED_GREEN && green_count == 0)
+            green_count = 6;
+
+        if (green_count > 0 && green_count % 2 != 0 && led == LED_GREEN)
+        {
+            digitalWrite(led, LOW);
+            green_count -= 1;
+        }
+        else if (green_count > 0 && green_count % 2 == 0 && led == LED_GREEN)
+        {
+            digitalWrite(led, HIGH);
+            green_count -= 1;
+        }
+
+        Delay(500);
     }
 }
 
 bool isButtonPressed(int pin)
 {
-    Sleep(10);
+    Delay(10);
     if (digitalRead(pin) == LOW)
         return true;
     return false;
