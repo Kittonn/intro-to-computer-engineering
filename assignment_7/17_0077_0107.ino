@@ -10,6 +10,10 @@ struct Time {
   int sec;
 };
 
+// ==== LDR SETTING ====
+#define LDR_PIN A3
+unsigned int analogValue;
+
 // ==== OLED SETTING ====
 #define OLED_RESET -1
 #define SCREEN_WIDTH 128
@@ -59,6 +63,7 @@ int onCountUpPause = 1;
 Time alarm = { 0, 0, 0 };
 Time alarmSave = { 0, 0, 0 };
 int onAlarm = 0;
+
 
 // ==== MODE SETTING ====
 #define CLOCK_MODE 0
@@ -120,16 +125,22 @@ void timer() {
   clock.hour += clock.min / 60;
   clock.min %= 60;
   clock.hour %= 24;
+  if (clock.sec == 0) {
+    EEPROM.update(20, clock.hour);
+    EEPROM.update(21, clock.min);
+  }
 }
 
 void change_hour() {
   clock.hour += 1;
+  EEPROM.update(20, clock.hour);
   clock.hour %= 24;
 }
 
 void change_min() {
   clock.min += 1;
   clock.hour += clock.min / 60;
+  EEPROM.update(21, clock.min);
   clock.min %= 60;
 }
 
@@ -198,8 +209,8 @@ void change_mode() {
 }
 
 // ==== Time Text ====
-String timerText = "00 : 00 : 00";
-String countUpText = "00 : 00 : 00";
+String timerText = "00 : 00";
+String countUpText = "00 : 00";
 // String countDownText = "00 : 00 : 00";
 String alarmText = "00 : 00";
 String saveAlarmText = "00 : 00";
@@ -210,17 +221,17 @@ void time_text() {
   timerText[5] = (clock.min / 10) + '0';
   timerText[6] = (clock.min % 10) + '0';
 
-  timerText[10] = (clock.sec / 10) + '0';
-  timerText[11] = (clock.sec % 10) + '0';
+  // timerText[10] = (clock.sec / 10) + '0';
+  // timerText[11] = (clock.sec % 10) + '0';
 
-  countUpText[0] = (countUp.hour / 10) + '0';
-  countUpText[1] = (countUp.hour % 10) + '0';
+  // countUpText[0] = (countUp.hour / 10) + '0';
+  // countUpText[1] = (countUp.hour % 10) + '0';
 
-  countUpText[5] = (countUp.min / 10) + '0';
-  countUpText[6] = (countUp.min % 10) + '0';
+  countUpText[0] = (countUp.min / 10) + '0';
+  countUpText[1] = (countUp.min % 10) + '0';
 
-  countUpText[10] = (countUp.sec / 10) + '0';
-  countUpText[11] = (countUp.sec % 10) + '0';
+  countUpText[5] = (countUp.sec / 10) + '0';
+  countUpText[6] = (countUp.sec % 10) + '0';
 
   // countDownText[0] = (countDown.hour / 10) + '0';
   // countDownText[1] = (countDown.hour % 10) + '0';
@@ -245,13 +256,27 @@ void time_text() {
 }
 
 void display_text(int x1, int y1, String name, int x2, int y2, String timer) {
+  OLED.setTextSize(1);
   OLED.setCursor(x1, y1);
   OLED.println(name);
+  OLED.setTextSize(2);
   OLED.setCursor(x2, y2);
   OLED.println(timer);
 }
 
-
+void display_alarm() {
+  OLED.clearDisplay();
+  OLED.setTextColor(WHITE);
+  if (analogValue > 900) {
+    OLED.dim(true);
+  } else {
+    OLED.dim(false);
+  }
+  OLED.setCursor(10, 10);
+  OLED.setTextSize(2);
+  OLED.print("WAKE UP!!");
+  OLED.display();
+}
 
 void setup() {
   Serial.begin(9600);
@@ -265,9 +290,27 @@ void setup() {
   }
   Timer1.initialize(1000000);
   Timer1.attachInterrupt(interruptClock);
+  // ==== WRITE EEPROM ====
+  // EEPROM.write(20, clock.hour);
+  // EEPROM.write(21, clock.min);
+
+  // ==== READ EEPROM ====
+  clock.hour = EEPROM.read(20);
+  clock.min = EEPROM.read(21);
 }
 
 void loop() {
+
+  unsigned int analogValue = analogRead(LDR_PIN);
+
+  OLED.clearDisplay();
+  OLED.setTextColor(WHITE);
+
+  if (analogValue > 900) {
+    OLED.dim(true);
+  } else {
+    OLED.dim(false);
+  }
 
   if (debounce(0)) {
     if (!digitalRead(button[0])) {
@@ -332,10 +375,18 @@ void loop() {
   }
 
   if (onAlarm && alarmSave.hour == clock.hour && alarmSave.min == clock.min && clock.sec == 0) {
-    tone(BUZZER_PIN, 440, 100);
-    onAlarm = 0;
+    while (1) {
+      // tone(BUZZER_PIN, 440, 100);
+      display_alarm();
+      if (debounce(0)) {
+        if (!digitalRead(button[0])) {
+          OLED.clearDisplay();
+          onAlarm = 0;
+          break;
+        }
+      }
+    }
   }
-
 
   // Serial.print(get_x());
   // Serial.print(" ");
@@ -345,8 +396,12 @@ void loop() {
 
   time_text();
 
-  OLED.clearDisplay();
-  OLED.setTextColor(WHITE);
+
+  if (get_x() > 360) {
+    OLED.setRotation(2);
+  } else {
+    OLED.setRotation(0);
+  }
 
   switch (MODE) {
     case CLOCK_MODE:
@@ -360,9 +415,12 @@ void loop() {
     //   break;
     case ALARM_MODE:
       display_text(10, 0, "Alarm", 10, 12, alarmText);
-      display_text(10, 24, saveAlarmText, 70, 24, onAlarm == 0 ? "OFF" : "ON");
+      OLED.setTextSize(1);
+      OLED.setCursor(80, 0);
+      OLED.println(onAlarm == 0 ? "OFF" : "ON");
+      // display_text(10, 24, saveAlarmText, 70, 24, onAlarm == 0 ? "OFF" : "ON");
       break;
   }
-  OLED.setTextSize(1);
+
   OLED.display();
 }
