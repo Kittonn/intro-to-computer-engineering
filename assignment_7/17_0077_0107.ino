@@ -279,7 +279,7 @@ void display_text(int x1, int y1, String name, int x2, int y2, String timer) {
   OLED.println(timer);
 }
 
-void display_alarm() {
+void popup_text(String text) {
   OLED.clearDisplay();
   OLED.setTextColor(WHITE);
   if (LDRvalue > 900) {
@@ -289,7 +289,7 @@ void display_alarm() {
   }
   OLED.setCursor(10, 10);
   OLED.setTextSize(2);
-  OLED.print("WAKE UP!!");
+  OLED.print(text);
   OLED.display();
 }
 
@@ -400,7 +400,7 @@ void loop() {
   if (onAlarm && alarmSave.hour == clock.hour && alarmSave.min == clock.min && clock.sec == 0) {
     while (1) {
       tone(BUZZER_PIN, 440, 100);
-      display_alarm();
+      popup_text("WAKE UP!!");
       if (debounce(0)) {
         if (!digitalRead(button[0])) {
           OLED.clearDisplay();
@@ -414,7 +414,7 @@ void loop() {
   if (finishCountDown) {
     while (1) {
       tone(BUZZER_PIN, 440, 100);
-      display_alarm();
+      popup_text("FINISH!!");
       if (debounce(0)) {
         if (!digitalRead(button[0])) {
           OLED.clearDisplay();
