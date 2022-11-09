@@ -12,7 +12,7 @@ struct Time {
 
 // ==== LDR SETTING ====
 #define LDR_PIN A3
-unsigned int analogValue;
+unsigned int LDRvalue;
 
 // ==== OLED SETTING ====
 #define OLED_RESET -1
@@ -47,6 +47,8 @@ unsigned long long int lastDebounceTime[4];
 
 // ==== BUZZER SETTING ====
 #define BUZZER_PIN 8
+int numTones = 10;
+int tones[] = { 261, 277, 294, 311, 330, 349, 370, 392, 415, 440 };
 
 // ==== CLOCK SETTING ====
 Time clock = { 0, 0, 0 };
@@ -56,8 +58,9 @@ Time countUp = { 0, 0, 0 };
 int onCountUpPause = 1;
 
 // ==== COUNT DOWN CLOCK SETTING ====
-// Time countDown = { 0, 0, 0 };
-// int onCountDownStart = 0, onCountDownPause = 0;
+Time countDown = { 0, 0, 0 };
+int onCountDown = 1, finishCountDown = 0;
+
 
 // ==== ALARM CLOCK SETTING ====
 Time alarm = { 0, 0, 0 };
@@ -69,7 +72,7 @@ int onAlarm = 0;
 #define CLOCK_MODE 0
 #define COUNTER_UP_MODE 1
 #define ALARM_MODE 2
-// #define COUNTER_DOWN_MODE 3
+#define COUNTER_DOWN_MODE 3
 int MODE = CLOCK_MODE;
 
 // ==== ACCELEROMETER ====
@@ -115,6 +118,7 @@ void interruptClock() {
   timer();
   countUpTime();
   change_timestart_alarm();
+  countDownTime();
 }
 
 // ==== TIMER CLOCK ====
@@ -140,6 +144,7 @@ void change_hour() {
 void change_min() {
   clock.min += 1;
   clock.hour += clock.min / 60;
+  clock.hour %= 24;
   EEPROM.update(21, clock.min);
   clock.min %= 60;
 }
@@ -162,20 +167,38 @@ void resetCountUpTime() {
 }
 
 // ==== COUNT DOWN CLOCK ====
-// void change_hour_countdown() {
-//   countDown.hour += 1;
-//   countDown.hour %= 24;
-// }
+void change_min_countdown() {
+  countDown.min += 1;
+  countDown.min %= 60;
+}
 
-// void change_min_countdown() {
-//   countDown.min += 1;
-//   countDown.min %= 60;
-// }
+void change_sec_countdown() {
+  countDown.sec += 1;
+  countDown.sec %= 60;
+}
 
-// void change_sec_countdown() {
-//   countDown.sec += 1;
-//   countDown.sec %= 60;
-// }
+void countDownTime() {
+
+  if (!onCountDown) {
+    if (countDown.sec == 0 && countDown.min != 0) {
+      if (countDown.min != 0) {
+        countDown.min -= 1;
+      }
+      countDown.sec = 60;
+    }
+    countDown.sec -= 1;
+    if (countDown.min == 0 && countDown.sec == 0) {
+      onCountDown = 1;
+      finishCountDown = 1;
+    }
+  }
+}
+
+void resetcountDownTime() {
+  countDown.hour = 0;
+  countDown.min = 0;
+  countDown.sec = 0;
+}
 
 // ==== ALARM CLOCK ====
 void change_hour_alarm() {
@@ -201,7 +224,7 @@ void change_timestart_alarm() {
 // ==== CLOCK MODE ====
 void change_mode() {
   MODE += 1;
-  MODE %= 3;
+  MODE %= 4;
   if (MODE == ALARM_MODE) {
     alarm.hour = clock.hour;
     alarm.min = clock.min;
@@ -211,7 +234,7 @@ void change_mode() {
 // ==== Time Text ====
 String timerText = "00 : 00";
 String countUpText = "00 : 00";
-// String countDownText = "00 : 00 : 00";
+String countDownText = "00 : 00";
 String alarmText = "00 : 00";
 String saveAlarmText = "00 : 00";
 void time_text() {
@@ -221,26 +244,17 @@ void time_text() {
   timerText[5] = (clock.min / 10) + '0';
   timerText[6] = (clock.min % 10) + '0';
 
-  // timerText[10] = (clock.sec / 10) + '0';
-  // timerText[11] = (clock.sec % 10) + '0';
-
-  // countUpText[0] = (countUp.hour / 10) + '0';
-  // countUpText[1] = (countUp.hour % 10) + '0';
-
   countUpText[0] = (countUp.min / 10) + '0';
   countUpText[1] = (countUp.min % 10) + '0';
 
   countUpText[5] = (countUp.sec / 10) + '0';
   countUpText[6] = (countUp.sec % 10) + '0';
 
-  // countDownText[0] = (countDown.hour / 10) + '0';
-  // countDownText[1] = (countDown.hour % 10) + '0';
+  countDownText[0] = (countDown.min / 10) + '0';
+  countDownText[1] = (countDown.min % 10) + '0';
 
-  // countDownText[5] = (countDown.min / 10) + '0';
-  // countDownText[6] = (countDown.min % 10) + '0';
-
-  // countDownText[10] = (countDown.sec / 10) + '0';
-  // countDownText[11] = (countDown.sec % 10) + '0';
+  countDownText[5] = (countDown.sec / 10) + '0';
+  countDownText[6] = (countDown.sec % 10) + '0';
 
   alarmText[0] = (alarm.hour / 10) + '0';
   alarmText[1] = (alarm.hour % 10) + '0';
@@ -260,6 +274,7 @@ void display_text(int x1, int y1, String name, int x2, int y2, String timer) {
   OLED.setCursor(x1, y1);
   OLED.println(name);
   OLED.setTextSize(2);
+
   OLED.setCursor(x2, y2);
   OLED.println(timer);
 }
@@ -267,7 +282,7 @@ void display_text(int x1, int y1, String name, int x2, int y2, String timer) {
 void display_alarm() {
   OLED.clearDisplay();
   OLED.setTextColor(WHITE);
-  if (analogValue > 900) {
+  if (LDRvalue > 900) {
     OLED.dim(true);
   } else {
     OLED.dim(false);
@@ -300,13 +315,14 @@ void setup() {
 }
 
 void loop() {
+  time_text();
 
-  unsigned int analogValue = analogRead(LDR_PIN);
+  LDRvalue = analogRead(LDR_PIN);
 
   OLED.clearDisplay();
   OLED.setTextColor(WHITE);
 
-  if (analogValue > 900) {
+  if (LDRvalue > 900) {
     OLED.dim(true);
   } else {
     OLED.dim(false);
@@ -321,11 +337,13 @@ void loop() {
         case COUNTER_UP_MODE:
           onCountUpPause = onCountUpPause == 1 ? 0 : 1;
           break;
-        // case COUNTER_DOWN_MODE:
-        //   change_hour_countdown();
-        //   break;
         case ALARM_MODE:
           change_hour_alarm();
+          break;
+        case COUNTER_DOWN_MODE:
+          if (!(countDown.min != 0 && countDown.sec != 0)) {
+            change_min_countdown();
+          }
           break;
       }
     }
@@ -341,11 +359,13 @@ void loop() {
           onCountUpPause = 1;
           resetCountUpTime();
           break;
-        // case COUNTER_DOWN_MODE:
-        //   change_min_countdown();
-        //   break;
         case ALARM_MODE:
           change_min_alarm();
+          break;
+        case COUNTER_DOWN_MODE:
+          if (!(countDown.min != 0 && countDown.sec != 0)) {
+            change_sec_countdown();
+          }
           break;
       }
     }
@@ -360,9 +380,6 @@ void loop() {
   if (debounce(3)) {
     if (!digitalRead(button[3])) {
       switch (MODE) {
-        // case COUNTER_DOWN_MODE:
-        //   change_sec_countdown();
-        //   break;
         case ALARM_MODE:
           onAlarm = onAlarm == 0 ? 1 : 0;
           if (onAlarm) {
@@ -370,13 +387,19 @@ void loop() {
             alarmSave.min = alarm.min;
           }
           break;
+        case COUNTER_DOWN_MODE:
+          if (!(countDown.min == 0 && countDown.sec == 0)) {
+            onCountDown = onCountDown == 1 ? 0 : 1;
+          }
+          break;
       }
     }
   }
 
+
   if (onAlarm && alarmSave.hour == clock.hour && alarmSave.min == clock.min && clock.sec == 0) {
     while (1) {
-      // tone(BUZZER_PIN, 440, 100);
+      tone(BUZZER_PIN, 440, 100);
       display_alarm();
       if (debounce(0)) {
         if (!digitalRead(button[0])) {
@@ -388,14 +411,19 @@ void loop() {
     }
   }
 
-  // Serial.print(get_x());
-  // Serial.print(" ");
-  // Serial.print(get_y());
-  // Serial.print(" ");
-  // Serial.println(get_z());
-
-  time_text();
-
+  if (finishCountDown) {
+    while (1) {
+      tone(BUZZER_PIN, 440, 100);
+      display_alarm();
+      if (debounce(0)) {
+        if (!digitalRead(button[0])) {
+          OLED.clearDisplay();
+          finishCountDown = 0;
+          break;
+        }
+      }
+    }
+  }
 
   if (get_x() > 360) {
     OLED.setRotation(2);
@@ -410,15 +438,16 @@ void loop() {
     case COUNTER_UP_MODE:
       display_text(10, 0, "Stopwatch", 10, 12, countUpText);
       break;
-    // case COUNTER_DOWN_MODE:
-    //   display_text(10, 0, "Timer", 10, 12, countDownText);
-    //   break;
     case ALARM_MODE:
-      display_text(10, 0, "Alarm", 10, 12, alarmText);
+      display_text(10, 0, "Alarm", 10, 9, alarmText);
       OLED.setTextSize(1);
+      OLED.setCursor(10, 25);
+      OLED.println(saveAlarmText);
       OLED.setCursor(80, 0);
       OLED.println(onAlarm == 0 ? "OFF" : "ON");
-      // display_text(10, 24, saveAlarmText, 70, 24, onAlarm == 0 ? "OFF" : "ON");
+      break;
+    case COUNTER_DOWN_MODE:
+      display_text(10, 0, "Timer", 10, 12, countDownText);
       break;
   }
 
