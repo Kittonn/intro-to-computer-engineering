@@ -269,11 +269,11 @@ void time_text() {
   saveAlarmText[6] = (alarmSave.min % 10) + '0';
 }
 
-void display_text(int x1, int y1, String name, int x2, int y2, String timer) {
-  OLED.setTextSize(1);
+void display_text(int x1, int y1, String name, int x2, int y2, String timer, int size1, int size2) {
+  OLED.setTextSize(size1);
   OLED.setCursor(x1, y1);
   OLED.println(name);
-  OLED.setTextSize(2);
+  OLED.setTextSize(size2);
 
   OLED.setCursor(x2, y2);
   OLED.println(timer);
@@ -445,21 +445,17 @@ void loop() {
 
   switch (MODE) {
     case CLOCK_MODE:
-      display_text(10, 0, "Clock", 10, 12, timerText);
+      display_text(10, 0, "Clock", 10, 12, timerText, 1, 2);
       break;
     case COUNTER_UP_MODE:
-      display_text(10, 0, "Stopwatch", 10, 12, countUpText);
+      display_text(10, 0, "Stopwatch", 10, 12, countUpText, 1, 2);
       break;
     case ALARM_MODE:
-      display_text(10, 0, "Alarm", 10, 9, alarmText);
-      OLED.setTextSize(1);
-      OLED.setCursor(10, 25);
-      OLED.println(saveAlarmText);
-      OLED.setCursor(80, 0);
-      OLED.println(onAlarm == 0 ? "OFF" : "ON");
+      display_text(10, 0, "Alarm", 10, 9, alarmText, 1, 2);
+      display_text(10, 25, saveAlarmText, 80, 0, onAlarm == 0 ? "OFF" : "ON", 1, 1);
       break;
     case COUNTER_DOWN_MODE:
-      display_text(10, 0, "Timer", 10, 12, countDownText);
+      display_text(10, 0, "Timer", 10, 12, countDownText, 1, 2);
       break;
   }
 
