@@ -13,6 +13,8 @@
 |  1  | Charliplexing        |    ✔️     |
 |  2  | Priority Switch      |    ✔️     |
 |  3  | Number Guess         |    ✔️     |
-|  4  | Project              |    ✔️     |
+|  4  | Pong Game (Project)  |    ✔️     |
 |  5  | Finite State Machine |    ✔️     |
 |  6  | Network Chat         |    ✔️     |
+|  7  | Mini Clock (Project) |    ✔️     |
+|  8  | Free Rtos            |    ✔️     |
