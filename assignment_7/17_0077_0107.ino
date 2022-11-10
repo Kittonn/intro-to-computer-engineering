@@ -10,6 +10,9 @@ struct Time {
   int sec;
 };
 
+int countDownCheck = 1;
+int alarmCheck = 1;
+
 // ==== LDR SETTING ====
 #define LDR_PIN A3
 unsigned int LDRvalue;
@@ -50,6 +53,11 @@ unsigned long long int lastDebounceTime[4];
 int numTones = 10;
 int tones[] = { 261, 277, 294, 311, 330, 349, 370, 392, 415, 440 };
 
+// ==== ULTRASONIC SENSOR ====
+int trigPin = 11;
+int echoPin = 10;
+float duration_us, distance_cm;
+
 // ==== CLOCK SETTING ====
 Time clock = { 0, 0, 0 };
 
@@ -59,14 +67,13 @@ int onCountUpPause = 1;
 
 // ==== COUNT DOWN CLOCK SETTING ====
 Time countDown = { 0, 0, 0 };
-int onCountDown = 1, finishCountDown = 0, onStart = 0;
+int onCountDown = 1, finishCountDown = 0, onStartCountDown = 0;
 
 
 // ==== ALARM CLOCK SETTING ====
 Time alarm = { 0, 0, 0 };
 Time alarmSave = { 0, 0, 0 };
 int onAlarm = 0;
-
 
 // ==== MODE SETTING ====
 #define CLOCK_MODE 0
@@ -119,6 +126,30 @@ void interruptClock() {
   countUpTime();
   change_timestart_alarm();
   countDownTime();
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  duration_us = pulseIn(echoPin, HIGH);
+  distance_cm = 0.017 * duration_us;
+
+  Serial.println(distance_cm);
+  if (finishCountDown && distance_cm < 7) {
+    OLED.clearDisplay();
+    countDownCheck = 0;
+    finishCountDown = 0;
+    onStartCountDown = 0;
+  } else {
+    countDownCheck = 1;
+  }
+
+  if (onAlarm && distance_cm < 7) {
+    OLED.clearDisplay();
+    onAlarm = 0;
+    alarmCheck = 0;
+  } else {
+    alarmCheck = 1;
+  }
 }
 
 // ==== TIMER CLOCK ====
@@ -312,12 +343,15 @@ void setup() {
   // ==== READ EEPROM ====
   clock.hour = EEPROM.read(20);
   clock.min = EEPROM.read(21);
+
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
 }
 
 void loop() {
-  time_text();
 
-  Serial.println(countDownText);
+
+  time_text();
 
   LDRvalue = analogRead(LDR_PIN);
 
@@ -329,8 +363,6 @@ void loop() {
   } else {
     OLED.dim(false);
   }
-
-
 
   if (debounce(0)) {
     if (!digitalRead(button[0])) {
@@ -345,7 +377,7 @@ void loop() {
           change_hour_alarm();
           break;
         case COUNTER_DOWN_MODE:
-          if (!onStart) {
+          if (!onStartCountDown) {
             change_min_countdown();
           }
           break;
@@ -367,11 +399,11 @@ void loop() {
           change_min_alarm();
           break;
         case COUNTER_DOWN_MODE:
-          if (!onStart) {
+          if (!onStartCountDown) {
             change_sec_countdown();
-          } else if (onStart) {
+          } else if (onStartCountDown) {
             resetcountDownTime();
-            onStart = 0;
+            onStartCountDown = 0;
             onCountDown = 1;
           }
           break;
@@ -398,7 +430,7 @@ void loop() {
         case COUNTER_DOWN_MODE:
           if (!(countDown.min == 0 && countDown.sec == 0)) {
             onCountDown = onCountDown == 1 ? 0 : 1;
-            onStart = 1;
+            onStartCountDown = 1;
           }
           break;
       }
@@ -409,7 +441,7 @@ void loop() {
 
 
   if (onAlarm && alarmSave.hour == clock.hour && alarmSave.min == clock.min && clock.sec == 0) {
-    while (1) {
+    while (alarmCheck) {
       tone(BUZZER_PIN, 440, 100);
       popup_text("WAKE UP!!");
       if (debounce(0)) {
@@ -423,14 +455,14 @@ void loop() {
   }
 
   if (finishCountDown) {
-    while (1) {
+    while (countDownCheck) {
       tone(BUZZER_PIN, 440, 100);
       popup_text("FINISH!!");
       if (debounce(0)) {
         if (!digitalRead(button[0])) {
           OLED.clearDisplay();
           finishCountDown = 0;
-          onStart = 0;
+          onStartCountDown = 0;
           break;
         }
       }
