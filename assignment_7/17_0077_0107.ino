@@ -133,7 +133,6 @@ void interruptClock() {
   duration_us = pulseIn(echoPin, HIGH);
   distance_cm = 0.017 * duration_us;
 
-  Serial.println(distance_cm);
   if (finishCountDown && distance_cm < 7) {
     OLED.clearDisplay();
     countDownCheck = 0;
