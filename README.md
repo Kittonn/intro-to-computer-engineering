@@ -8,13 +8,14 @@
 
 ### Assignment
 
-| \#  | Assignment           | Completed |
-| :-: | -------------------- | :-------: |
-|  1  | Charliplexing        |    ✔️     |
-|  2  | Priority Switch      |    ✔️     |
-|  3  | Number Guess         |    ✔️     |
-|  4  | Pong Game (Project)  |    ✔️     |
-|  5  | Finite State Machine |    ✔️     |
-|  6  | Network Chat         |    ✔️     |
-|  7  | Mini Clock (Project) |    ✔️     |
-|  8  | Free Rtos            |    ✔️     |
+| \#  | Assignment                                       | Completed |
+| :-: | ------------------------------------------------ | :-------: |
+|  1  | [Charliplexing](./assignment_1/README.md)        |    ✔️     |
+|  2  | [Priority Switch](./assignment_2/README.md)      |    ✔️     |
+|  3  | [Number Guess](./assignment_3/README.md)         |    ✔️     |
+|  4  | [Pong Game (Project)](./assignment_4/README.md)  |    ✔️     |
+|  5  | [Finite State Machine](./assignment_5/README.md) |    ✔️     |
+|  6  | [Network Chat](./assignment_6/README.md)         |    ✔️     |
+|  7  | [Mini Clock (Project)](./assignment_7/README.md) |    ✔️     |
+|  8  | [Free Rtos](./assignment_8/README.md)            |    ✔️     |
+|  9  | [Final Test](./final_test/README.md)             |    ✔️     |
